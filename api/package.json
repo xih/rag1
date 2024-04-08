@@ -10,13 +10,14 @@
   "scripts": {
     "build": "yarn gen:supabase:types && tsc --declaration --outDir dist/",
     "start": "tsx --experimental-wasm-modules -r dotenv/config src/index.ts dotenv_config_path=.env.development.local",
+    "start2": "nodemon --exec 'tsx --experimental-wasm-modules -r dotenv/config src/server.ts dotenv_config_path=.env.development.local'",
     "start:dist": "yarn build && node -r dotenv/config dist/index.js",
     "lint": "eslint src",
     "lint:fix": "yarn lint --fix",
     "precommit": "lint-staged",
     "format": "prettier --write \"**/*.ts\"",
     "format:check": "prettier --check \"**/*.ts\"",
-    "gen:supabase:types": "touch ./src/generated/db.ts && supabase gen types typescript --schema public > ./src/generated/db.ts --project-id <YOUR_PROJECT_ID>"
+    "gen:supabase:types": "touch ./src/generated/db.ts && supabase gen types typescript --schema public > ./src/generated/db.ts --project-id zdtnbjiwtumlrihvalpw"
   },
   "author": "LangChain",
   "license": "MIT",
@@ -28,8 +29,10 @@
     "express": "^4.18.2",
     "langchain": "^0.1.31",
     "langsmith": "^0.1.14",
+    "nodemon": "^3.1.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
+    "supabase": "^1.153.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {

@@ -45,12 +45,12 @@ export type ArxivPaperNote = {
 export const outputParser = (
   output: BaseMessageChunk
 ): Array<ArxivPaperNote> => {
-  console.log(output, "output");
-  console.log(output.additional_kwargs, "additional_kwargs");
-  console.log(
-    output.additional_kwargs.tool_calls,
-    "additional_kwargs.tool_calls"
-  );
+  // console.log(output, "output");
+  // console.log(output.additional_kwargs, "additional_kwargs");
+  // console.log(
+  //   output.additional_kwargs.tool_calls,
+  //   "additional_kwargs.tool_calls"
+  // );
   const toolCalls = output.additional_kwargs.tool_calls;
   if (!toolCalls) {
     throw new Error("Missing 'tool_calls' in notes output");

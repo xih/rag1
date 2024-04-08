@@ -17,6 +17,7 @@ import {
 import { readFile } from "fs/promises";
 import { traceable } from "langsmith/traceable";
 import { wrapOpenAI } from "langsmith/wrappers";
+import { SupabaseDatabase } from "database.js";
 
 // run the docker image
 // docker run -p 8000:8000 -d --rm --name unstructured-api downloads.unstructured.io/unstructured-io/unstructured-api:latest --port 8000 --host 0.0.0.0
@@ -99,7 +100,7 @@ async function generateNotes(
   return response;
 }
 
-const main = async ({
+export const takeNotes = async ({
   paperUrl,
   name,
   pagesToDelete,
@@ -111,25 +112,45 @@ const main = async ({
   if (!paperUrl.endsWith("pdf")) {
     throw new Error("Not a pdf");
   }
-  let pdfBuffer = await loadPaperFromUrl(paperUrl);
+  // let pdfBuffer = await loadPaperFromUrl(paperUrl);
 
-  if (pagesToDelete && pagesToDelete.length > 0) {
-    // delete pages
-    pdfBuffer = await deletePages(pdfBuffer, pagesToDelete);
-  }
+  // if (pagesToDelete && pagesToDelete.length > 0) {
+  //   // delete pages
+  //   pdfBuffer = await deletePages(pdfBuffer, pagesToDelete);
+  // }
+  // const documents = await convertPdfToDocuments(pdfBuffer);
+  // await writeFile(`pdfs/document.json`, JSON.stringify(documents), "utf-8");
 
-  // instead of making a new PDF just use an existing JSON pdf
-
-  // const docs = await readFile(`pdfs/document.json`, "utf-8");
+  const docs = await readFile(`pdfs/document.json`, "utf-8");
+  const documents = JSON.parse(docs);
 
   // convert our pdf to a documents
-  const documents = await convertPdfToDocuments(pdfBuffer);
   const notes = await generateNotes(documents);
-  console.log(notes);
-  console.log(notes.length, "length of documents");
+  // console.log(notes);
+  // console.log(notes.length, "length of documents");
+
+  // instantiate our database
+  // in the future, add a check that allows you to instantiate a document from an index
+  // so you don't have to do it all the time
+  const database = await SupabaseDatabase.fromDocuments(documents);
+  await Promise.all([
+    database.addPaper({
+      paperUrl,
+      name,
+      paper: formatDocumentsAsString(documents),
+      notes,
+    }),
+    database.vectorStore.addDocuments(documents),
+  ]);
+
+  return notes;
+
+  // next step is to add embeddings to our database
+  // first, wrap this into a promise.all
+  // this will generate all our notes, save our embeddings and do it so we can use everything in the client
 };
 
-main({
+takeNotes({
   paperUrl: "https://arxiv.org/pdf/2404.01230.pdf",
   name: "test",
 });
