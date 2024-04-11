@@ -1,5 +1,6 @@
 import express from "express";
-import { takeNotes } from "index.js";
+import { takeNotes } from "notes/index.js";
+import { qaOnPaper } from "./qa/index.js";
 
 function main() {
   const app = express();
@@ -16,13 +17,22 @@ function main() {
 
   // define a post endpoint route
   app.post("/take_notes", async (req, res) => {
-    console.log("helllo");
-    console.log(req.body);
     const { paperUrl, name, pagesToDelete } = req.body;
+
+    console.log(paperUrl);
 
     const notes = await takeNotes({ paperUrl, name, pagesToDelete });
 
     res.status(200).send(notes);
+    return;
+  });
+
+  app.post("/qa", async (req, res) => {
+    const { question, paperUrl } = req.body;
+
+    const qa = await qaOnPaper(question, paperUrl);
+
+    res.status(200).send(qa);
     return;
   });
 

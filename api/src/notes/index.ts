@@ -13,7 +13,7 @@ import {
   NOTE_PROMPT,
   outputParser,
   outputParser2,
-} from "prompts.js";
+} from "notes/prompts.js";
 import { readFile } from "fs/promises";
 import { traceable } from "langsmith/traceable";
 import { wrapOpenAI } from "langsmith/wrappers";
@@ -109,38 +109,55 @@ export const takeNotes = async ({
   name: string;
   pagesToDelete?: number[];
 }) => {
-  if (!paperUrl.endsWith("pdf")) {
-    throw new Error("Not a pdf");
-  }
+  // instantiate our database
+  // in the future, add a check that allows you to instantiate a document from an index
+  // so you don't have to do it all the time
+  const database = await SupabaseDatabase.fromExistingIndex();
+
+  // if (!paperUrl.endsWith("pdf")) {
+  //   throw new Error("Not a pdf");
+  // }
   // let pdfBuffer = await loadPaperFromUrl(paperUrl);
 
   // if (pagesToDelete && pagesToDelete.length > 0) {
   //   // delete pages
   //   pdfBuffer = await deletePages(pdfBuffer, pagesToDelete);
   // }
+
+  // // console.log(pdfBuffer, "pdfBuffer");
   // const documents = await convertPdfToDocuments(pdfBuffer);
+
+  // console.log(documents, "documents");
+
   // await writeFile(`pdfs/document.json`, JSON.stringify(documents), "utf-8");
 
+  // following 2 lines are a shortcut
   const docs = await readFile(`pdfs/document.json`, "utf-8");
-  const documents = JSON.parse(docs);
+  const documents: Document<Record<string, any>>[] = JSON.parse(docs);
 
   // convert our pdf to a documents
   const notes = await generateNotes(documents);
   // console.log(notes);
   // console.log(notes.length, "length of documents");
 
-  // instantiate our database
-  // in the future, add a check that allows you to instantiate a document from an index
-  // so you don't have to do it all the time
-  const database = await SupabaseDatabase.fromDocuments(documents);
+  const newDocs = documents.map((doc) => {
+    return {
+      ...doc,
+      metadata: {
+        ...doc.metadata,
+        url: paperUrl,
+      },
+    };
+  });
+
   await Promise.all([
     database.addPaper({
       paperUrl,
       name,
-      paper: formatDocumentsAsString(documents),
+      paper: formatDocumentsAsString(newDocs),
       notes,
     }),
-    database.vectorStore.addDocuments(documents),
+    database.vectorStore.addDocuments(newDocs),
   ]);
 
   return notes;
